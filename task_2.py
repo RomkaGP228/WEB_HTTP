@@ -4,9 +4,6 @@ import requests
 from PIL import Image
 from get_spn import get_spn
 
-# Пусть наше приложение предполагает запуск:
-# python task_2.py Москва, ул. Ак. Королева, 12
-# Тогда запрос к геокодеру формируется следующим образом:
 toponym_to_find = " ".join(sys.argv[1:])
 
 geocoder_api_server = "http://geocode-maps.yandex.ru/1.x/"
@@ -21,20 +18,12 @@ response = requests.get(geocoder_api_server, params=geocoder_params)
 if not response:
     print("Произошла ошибка! Выход из программы...", response)
     exit(0)
-
-# Преобразуем ответ в json-объект
 json_response = response.json()
-
-# Получаем первый топоним из ответа геокодера.
 toponym = json_response["response"]["GeoObjectCollection"]["featureMember"][0]["GeoObject"]
-# Координаты центра топонима:
-toponym_coodrinates = toponym["Point"]["pos"]
-# Долгота и широта:
-toponym_longitude, toponym_latitude = toponym_coodrinates.split(" ")
+toponym_coordinates = toponym["Point"]["pos"]
+toponym_longitude, toponym_latitude = toponym_coordinates.split(" ")
 delta_longitude, delta_latitude = get_spn(toponym)
-apikey = "a213c2f5-da6e-4674-b693-d5a10dd2f1d8"
-print(delta_latitude, delta_latitude)
-# Собираем параметры для запроса к StaticMapsAPI:
+apikey = "f3a0fe3a-b07e-4840-a1da-06f18b2ddf13"
 map_params = {
     "ll": ",".join([toponym_longitude, toponym_latitude]),
     "spn": ",".join([delta_longitude, delta_latitude]),
@@ -42,8 +31,14 @@ map_params = {
     "pt": ",".join([toponym_longitude, toponym_latitude, "comma"])
 }
 
-map_api_server = "https://static-maps.yandex.ru/v1"
-response = requests.get(map_api_server, params=map_params)
-im = BytesIO(response.content)
-opened_image = Image.open(im)
-opened_image.show()  # Создадим картинку и тут же ее покажем встроенным просмотрщиком операционной системы
+
+def main():
+    map_api_server = "https://static-maps.yandex.ru/v1"
+    response = requests.get(map_api_server, params=map_params)
+    im = BytesIO(response.content)
+    opened_image = Image.open(im)
+    opened_image.show()
+
+
+if __name__ == '__main__':
+    main()
