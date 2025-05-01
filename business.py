@@ -2,7 +2,7 @@ import requests
 
 
 def find_business(ll, text):
-    search_api_server = "https://search-maps.yandex.ru/v1/"
+    SERVER_ADDRESS = "https://search-maps.yandex.ru/v1/"
     api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
     search_params = {
         "apikey": api_key,
@@ -13,13 +13,13 @@ def find_business(ll, text):
         "text": text,
     }
 
-    response = requests.get(search_api_server, params=search_params)
+    response = requests.get(SERVER_ADDRESS, params=search_params)
     if not response:
         raise RuntimeError(
             """Ошибка выполнения запроса:
             {request}
             Http статус: {status} ({reason})""".format(
-                request=search_api_server, status=response.status_code, reason=response.reason))
+                request=SERVER_ADDRESS, status=response.status_code, reason=response.reason))
 
     # Преобразуем ответ в json-объект
     json_response = response.json()

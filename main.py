@@ -27,8 +27,8 @@ def main():
         "pt": f'{toponym_longitude},{toponym_latitude},comma~{organization_longitude},{organization_latitude},pm2rdl'
     }
 
-    map_api_server = "http://static-maps.yandex.ru/1.x/"
-    response = requests.get(map_api_server, params=map_params)
+    SERVER_ADDRESS = "http://static-maps.yandex.ru/1.x/"
+    response = requests.get(SERVER_ADDRESS, params=map_params)
     Image.open(BytesIO(
         response.content)).show()
 
