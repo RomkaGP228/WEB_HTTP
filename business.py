@@ -1,11 +1,9 @@
 import requests
-
+from config import SERVER_ADDRESS, API_KEY_STATIC
 
 def find_business(ll, text):
-    SERVER_ADDRESS = "https://search-maps.yandex.ru/v1/"
-    api_key = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
     search_params = {
-        "apikey": api_key,
+        "apikey": API_KEY_STATIC,
         "lang": "ru_RU",
         "ll": ll,
         "spn": "0.001,0.001",

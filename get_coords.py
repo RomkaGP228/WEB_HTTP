@@ -1,9 +1,8 @@
 import requests
-
+from config import API_KEY_GEOCODE
 
 def get_coords(toponym_to_find):
     geocoder_api_server = "http://geocode-maps.yandex.ru/1.x/"
-    API_KEY_GEOCODE = "8013b162-6b42-4997-9691-77b7074026e0"
     geocoder_params = {
         "apikey": API_KEY_GEOCODE,
         "geocode": toponym_to_find,

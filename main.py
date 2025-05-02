@@ -5,6 +5,7 @@ from get_coords import get_coords
 import requests
 from PIL import Image
 from business import find_business
+from config import SERVER_ADDRESS, API_KEY_GEOCODE
 
 
 def main():
@@ -27,7 +28,6 @@ def main():
         "pt": f'{toponym_longitude},{toponym_latitude},comma~{organization_longitude},{organization_latitude},pm2rdl'
     }
 
-    SERVER_ADDRESS = "http://static-maps.yandex.ru/1.x/"
     response = requests.get(SERVER_ADDRESS, params=map_params)
     Image.open(BytesIO(
         response.content)).show()

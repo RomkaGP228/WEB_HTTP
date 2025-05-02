@@ -1,0 +1,3 @@
+API_KEY_GEOCODE = "8013b162-6b42-4997-9691-77b7074026e0"
+SERVER_ADDRESS = "http://static-maps.yandex.ru/1.x/"
+API_KEY_STATIC = "dda3ddba-c9ea-4ead-9010-f43fbc15c6e3"
