@@ -1,36 +1,19 @@
-import sys
-from io import BytesIO
-from distance import lonlat_distance
-from get_coords import get_coords
 import requests
-from PIL import Image
-from business import find_business
-from config import SERVER_ADDRESS, API_KEY_GEOCODE
+from get_coords import get_coords
+import sys
+from config import API_KEY_GEOCODE, SERVER_GEOCODE
 
 
 def main():
-    toponym_to_find = " ".join(sys.argv[1:])
-    toponym_coordinates = get_coords(toponym_to_find)
-    toponym_longitude, toponym_latitude = toponym_coordinates
-
-    organization = find_business(','.join([toponym_longitude, toponym_latitude]), 'Круглосуточная Аптека')
-    organization_coordinates = organization['geometry']['coordinates']
-    organization_longitude, organization_latitude = organization_coordinates
-    organization_metadata = organization['properties']['CompanyMetaData']
-    print('Адрес:', organization_metadata['address'])
-    print('Название:', organization_metadata['name'])
-    print('Время работы:', organization_metadata['Hours']['text'])
-    print('Прямое расстояние по карте:', str(int(lonlat_distance(list(
-        map(float, toponym_coordinates)), list(map(float, organization_coordinates))))) + "м")
-
-    map_params = {
-        "l": "map",
-        "pt": f'{toponym_longitude},{toponym_latitude},comma~{organization_longitude},{organization_latitude},pm2rdl'
-    }
-
-    response = requests.get(SERVER_ADDRESS, params=map_params)
-    Image.open(BytesIO(
-        response.content)).show()
+    coords = get_coords(' '.join(sys.argv[1:]))
+    params = {"geocode": ','.join(list(map(str, coords))),
+              "apikey": API_KEY_GEOCODE,
+              "kind": "district",
+              "format": "json",
+              "results": 1}
+    # kind - это тип топонима, который мы ищем. В данном мы ищем район, но также можно искать дом, улицу, решион и тд.
+    data = requests.get(SERVER_GEOCODE, params).json()
+    print(data['response']['GeoObjectCollection']['featureMember'][0]['GeoObject']['name'])
 
 
 if __name__ == '__main__':
