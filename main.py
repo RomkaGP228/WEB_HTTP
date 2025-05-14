@@ -1,52 +1,82 @@
-import os
-import shutil
+import sys
+from io import BytesIO
 import requests
-from get_coords import get_coords
-from random import choice, randrange
-import pygame
-from config import SERVER_ADDRESS
+from PIL import Image
+from config import SERVER_GEOCODE, API_KEY_GEOCODE, SERVER_ADDRESS
+from business import find_business
 
-if os.path.exists('photos'):
-    shutil.rmtree('photos')
 
-cities = ['Москва', 'Нью-Йорк', 'Владивосток', 'Париж', "Кэмбридж"]
-os.mkdir('photos')
-images = []
-for i, city in enumerate(cities):
-    city_coords = list(get_coords(city))
-    lon_delta, lat_delta = randrange(20, 30) / float(1000), randrange(20, 30) / float(1000)
-    lonlat = ','.join([str(float(city_coords[0]) + lon_delta), str(float(city_coords[1]) + lon_delta)])
-    size = randrange(5, 30) / float(1000)
-    params = {"ll": lonlat,
-              "spn": f'{size},{size}',
-              "l": choice(['map', 'sat'])}
-    response = requests.get(SERVER_ADDRESS, params=params)
-    filename = os.path.join('photos', f'{i}.png')
-    file = open(filename, mode='wb')
-    file.write(response.content)
-    file.close()
-    images.append(pygame.image.load(filename))
-    del file
+def is_fullday(availabilities):
+    for entry in availabilities:
+        if "TwentyFourHours" in entry and entry['TwentyFourHours'] is True:
+            return True
+    return False
 
-pygame.init()
-pygame.display.set_caption('Угадай-ка город')
-screen = pygame.display.set_mode((600, 450))
-running = True
-image = choice(images)
-clock = pygame.time.Clock()
-while running:
-    for event in pygame.event.get():
-        if event.type == pygame.QUIT:
-            running = False
-            break
-        elif event.type in [pygame.MOUSEBUTTONDOWN, pygame.KEYDOWN]:
-            prev_image = image
-            while prev_image == image:
-                image = choice(images)
-    screen.fill('white')
-    screen.blit(image, (0, 0))
-    pygame.display.flip()
-    clock.tick(24)
-pygame.quit()
 
-shutil.rmtree('photos')
+def generate_point(str_coords, color):
+    return f'{str_coords},pm2{color}l'
+
+
+def main():
+    toponym_to_find = " ".join(sys.argv[1:])
+    geocoder_params = {
+        "apikey": API_KEY_GEOCODE,
+        "geocode": toponym_to_find,
+        "format": "json"}
+
+    response = requests.get(SERVER_GEOCODE, params=geocoder_params)
+    json_response = response.json()
+    toponym = json_response["response"]["GeoObjectCollection"][
+        "featureMember"][0]["GeoObject"]
+    toponym_coords = toponym["Point"]["pos"].split(" ")
+    toponym_longitude, toponym_lattitude = toponym_coords
+
+    data = find_business(','.join([toponym_longitude, toponym_lattitude]), 10, 'аптека')
+    round = []
+    nonround = []
+    unknown = []
+
+    for organization in data["features"]:
+        organization_coordinates = organization['geometry']['coordinates']
+        organization_metadata = organization['properties']['CompanyMetaData']
+        isround = False
+        isknown = False
+        if 'Hours' in organization_metadata and 'Availabilities' in organization_metadata['Hours']:
+            isround = is_fullday(
+                organization_metadata['Hours']['Availabilities'])
+        if 'Hours' in organization_metadata:
+            isknown = True
+        str_coords = ','.join(map(str, organization_coordinates))
+        if str_coords != '':
+            if isround:
+                round.append(str_coords)
+            elif isknown:
+                nonround.append(str_coords)
+            else:
+                unknown.append(str_coords)
+    round_str = '~'.join([generate_point(i, 'gn') for i in round])
+    nonround_str = '~'.join([generate_point(i, 'bl')
+                             for i in nonround])
+    unknown_str = '~'.join([generate_point(i, 'gr') for i in unknown])
+    to_join = []
+    if round_str != '':
+        to_join.append(round_str)
+    if nonround_str != '':
+        to_join.append(nonround_str)
+    if unknown_str != '':
+        to_join.append(unknown_str)
+    pt = '~'.join(to_join)
+
+    map_params = {
+        "l": "map",
+        "pt": pt,
+    }
+
+    map_api_server = SERVER_ADDRESS
+    response = requests.get(map_api_server, params=map_params)
+    Image.open(BytesIO(
+        response.content)).show()
+
+
+if __name__ == '__main__':
+    main()
