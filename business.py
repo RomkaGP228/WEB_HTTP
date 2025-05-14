@@ -6,7 +6,6 @@ def find_business(ll, res, text):
         "apikey": API_KEY_SEARCH,
         "lang": "ru_RU",
         "ll": ll,
-        "spn": "0.001,0.001",
         "type": "biz",
         'text': text,
         "results": res
